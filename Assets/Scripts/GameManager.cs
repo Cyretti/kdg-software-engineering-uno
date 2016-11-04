@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour {
     static GameObject victoryUI;
     public Color red, yellow, blue, green;
     static GameManager instance;
+    static bool ifAlreadyPulled;
 
     public static int PlayerIndex {
         get {return playerIndex;}
@@ -51,8 +52,36 @@ public class GameManager : MonoBehaviour {
         StartGame();
     }
 
+
+    public void Update() {
+        if(Input.GetKeyDown(KeyCode.P)) {
+            onPileClick();
+        }
+        if(Input.GetKeyDown(KeyCode.Return) && continueUI) {
+            OnContinueUIClick();
+        }
+        if(Input.GetKeyDown(KeyCode.Escape)) {
+            Application.Quit();
+        }
+    }
+
     public void onPileClick() {
-        Pile.PullCard();
+        if (continueUI) return;
+        
+        CardController controller = Pile.instance.pile[0];
+
+        if(!ifAlreadyPulled) {
+            if(controller.CanBePlayed()) {
+                ifAlreadyPulled = true;
+                foreach(CardView view in GameManager.CurrentPlayer.hand) {
+                    view.IsDraggable = false;
+                }
+                Pile.PullCard();
+            } else {
+                EndTurn();
+                Pile.PullCard();
+            }
+        }
     }
 
     public static void StartGame() {
@@ -68,6 +97,12 @@ public class GameManager : MonoBehaviour {
     }
 
     public static void BeginTurn() {
+        ifAlreadyPulled = false;
+
+        foreach(CardView view in GameManager.CurrentPlayer.hand) {
+            view.IsDraggable = true;
+        }
+
         //Set current hand as scrollable
         Pile.instance.GetComponent<ScrollRect>().content = CurrentPlayer.HandGameObject.GetComponent<RectTransform>();
         //Set current player in textbar
@@ -102,14 +137,9 @@ public class GameManager : MonoBehaviour {
         return createdUI;
     }
 
-    
- 
-    
-
-    public static void CheckVictoryCondition()
-    {
-        if(CurrentPlayer.hand.Count == 0)
-        {
+    public static void CheckVictoryCondition() {
+        if(CurrentPlayer.hand.Count == 0) {
+            Debug.Log("victory");
             victoryUI = createUI("player " + (PlayerIndex + 1) + " wins", "restart");
             victoryUI.GetComponentInChildren<Button>().onClick.AddListener(StartNewGame);
         }
@@ -129,8 +159,11 @@ public class GameManager : MonoBehaviour {
         ToggleNextPlayer();
     }
 
-    public static void ToggleNextPlayer() {
-        PlayerIndex++;
+    public static void ToggleNextPlayer(bool nextPlayer = true) {
+        if(nextPlayer)
+            PlayerIndex++;
+        else
+            playerIndex--;
         BeginTurn();
     }
 

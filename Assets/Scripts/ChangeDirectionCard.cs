@@ -5,6 +5,11 @@ using System.Collections;
 public class ChangeDirectionCard : ColoredCard {
     public override void OnPlay()
     {
-
+        if(GameManager.PlayerIndex < 2) {
+            GameManager.ToggleNextPlayer(true);
+            GameManager.EndTurn();
+        } else {
+            GameManager.ToggleNextPlayer(false);
+        }
     }
 }
